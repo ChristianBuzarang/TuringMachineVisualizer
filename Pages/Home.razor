@@ -1,0 +1,140 @@
+﻿@page "/"
+@using TuringMachineVisualizer.Core
+@using TuringMachineVisualizer.Models
+@using TuringMachineVisualizer.Services
+@inject SupabaseService Supabase
+@inject NavigationManager Nav
+@implements IDisposable
+
+<PageTitle>1-Tape Turing Machine Visualizer</PageTitle>
+
+<div class="workspace">
+    <div class="toolbar">
+        <div class="preset-group">
+            <label for="presetSelect">Preset:</label>
+            <select id="presetSelect" @onchange="OnPresetChanged">
+                <option value="abb">a/b Inverter (#abb# → #baa#)</option>
+                @foreach (var m in _savedMachines)
+                {
+                    <option value="saved:@m.Id">[Saved] @m.Title</option>
+                }
+            </select>
+        </div>
+
+        <div class="account-group">
+            @if (Supabase.IsAuthenticated)
+            {
+                <span class="user-tag">@Supabase.CurrentUser?.Email</span>
+                <button type="button" @onclick="SaveCurrentMachine" disabled="@_isSaving">
+                    @(_isSaving ? "Saving..." : "Save Machine")
+                </button>
+                <button type="button" class="secondary" @onclick="SignOut">Sign Out</button>
+            }
+            else
+            {
+                <button type="button" @onclick='() => Nav.NavigateTo("/auth")'>Sign In / Sign Up</button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_statusBanner))
+    {
+        <div class="banner">@_statusBanner</div>
+    }
+
+    <TapeView Definition="_activeMachine" />
+</div>
+
+@code {
+    private MachineDefinition _activeMachine = Presets.AbbInverter;
+    private List<SavedMachineRecord> _savedMachines = new();
+    private string _statusBanner = "";
+    private bool _isSaving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Supabase.AuthStateChanged += OnAuthChanged;
+        await RefreshSavedMachinesAsync();
+    }
+
+    private async void OnAuthChanged()
+    {
+        await RefreshSavedMachinesAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RefreshSavedMachinesAsync()
+    {
+        if (!Supabase.IsAuthenticated)
+        {
+            _savedMachines = new();
+            return;
+        }
+
+        try
+        {
+            _savedMachines = await Supabase.GetMyMachinesAsync();
+        }
+        catch (Exception ex)
+        {
+            _statusBanner = $"Could not load saved machines: {ex.Message}";
+        }
+    }
+
+    private void OnPresetChanged(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString() ?? "";
+        _statusBanner = "";
+
+        if (val == "abb")
+        {
+            _activeMachine = Presets.AbbInverter;
+            return;
+        }
+
+        if (val.StartsWith("saved:") && long.TryParse(val["saved:".Length..], out var id))
+        {
+            var match = _savedMachines.FirstOrDefault(m => m.Id == id);
+            if (match is not null)
+            {
+                _activeMachine = match.ToDefinition();
+            }
+        }
+    }
+
+    private async Task SaveCurrentMachine()
+    {
+        if (!Supabase.IsAuthenticated || _isSaving) return;
+
+        _isSaving = true;
+        _statusBanner = "";
+        try
+        {
+            var saved = await Supabase.SaveMachineAsync(_activeMachine);
+            if (saved is not null)
+            {
+                _savedMachines.Insert(0, saved);
+                _statusBanner = $"Saved \"{_activeMachine.Title}\" to Supabase.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _statusBanner = $"Save failed: {ex.Message}";
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private async Task SignOut()
+    {
+        await Supabase.SignOutAsync();
+        _statusBanner = "Signed out.";
+    }
+
+    public void Dispose()
+    {
+        Supabase.AuthStateChanged -= OnAuthChanged;
+    }
+}

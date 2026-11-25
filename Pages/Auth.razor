@@ -1,0 +1,88 @@
+@page "/auth"
+@using TuringMachineVisualizer.Services
+@inject SupabaseService Supabase
+@inject NavigationManager Nav
+
+<PageTitle>Account — Turing Machine Visualizer</PageTitle>
+
+<div class="auth-card">
+    <h2>@(_isSignUp ? "Create Account" : "Sign In")</h2>
+    <p class="muted">Save custom 1-tape Turing Machines and solver runs to Supabase.</p>
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="error-box">@_error</div>
+    }
+
+    @if (_isSignUp)
+    {
+        <div class="field">
+            <label>Display Name</label>
+            <input @bind="_displayName" placeholder="Your name" />
+        </div>
+    }
+
+    <div class="field">
+        <label>Email</label>
+        <input type="email" @bind="_email" placeholder="you@example.com" />
+    </div>
+
+    <div class="field">
+        <label>Password</label>
+        <input type="password" @bind="_password" placeholder="••••••••" />
+    </div>
+
+    <div class="actions">
+        <button type="button" @onclick="SubmitAsync" disabled="@_busy">
+            @(_busy ? "Working..." : (_isSignUp ? "Sign Up" : "Sign In"))
+        </button>
+        <button type="button" class="secondary" @onclick="ToggleMode" disabled="@_busy">
+            @(_isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up")
+        </button>
+    </div>
+</div>
+
+@code {
+    private bool _isSignUp;
+    private bool _busy;
+    private string _displayName = "";
+    private string _email = "";
+    private string _password = "";
+    private string _error = "";
+
+    private void ToggleMode()
+    {
+        _isSignUp = !_isSignUp;
+        _error = "";
+    }
+
+    private async Task SubmitAsync()
+    {
+        _error = "";
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "Email and password are required.";
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            var result = _isSignUp
+                ? await Supabase.SignUpAsync(_email.Trim(), _password, _displayName.Trim())
+                : await Supabase.SignInAsync(_email.Trim(), _password);
+
+            if (!result.Success)
+            {
+                _error = result.Error ?? "Authentication failed.";
+                return;
+            }
+
+            Nav.NavigateTo("/");
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}
