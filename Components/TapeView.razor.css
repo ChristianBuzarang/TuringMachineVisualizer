@@ -1,0 +1,153 @@
+.tm-visualizer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px solid #2d333b;
+    border-radius: 10px;
+    background: #161b22;
+    color: #e6edf3;
+}
+
+.tm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.muted {
+    color: #8b949e;
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+}
+
+.status-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    background: #21262d;
+    border: 1px solid #30363d;
+    font-size: 0.85rem;
+}
+
+.badge.status.accepted {
+    border-color: #2ea043;
+    color: #3fb950;
+}
+
+.badge.status.rejected,
+.badge.status.steplimitreached {
+    border-color: #f85149;
+    color: #ff7b72;
+}
+
+.input-bar,
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.input-bar input {
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: monospace;
+}
+
+button {
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #388bfd;
+    background: #1f6feb;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+button:hover:not(:disabled) {
+    background: #388bfd;
+}
+
+button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.tape-strip {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+}
+
+.tape-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 44px;
+}
+
+.head-pointer {
+    color: #58a6ff;
+    font-size: 0.85rem;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.cell-box {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    background: #0d1117;
+    font-family: monospace;
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.tape-cell.head .cell-box {
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.35);
+    background: #13233a;
+}
+
+.cell-index {
+    font-size: 0.7rem;
+    color: #8b949e;
+    font-family: monospace;
+    margin-top: 2px;
+}
+
+.rule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.rule-table th,
+.rule-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #21262d;
+    text-align: left;
+}
+
+.rule-table tr.next-rule {
+    background: rgba(88, 166, 255, 0.16);
+}
+
+.rule-table tr.last-rule {
+    background: rgba(63, 185, 80, 0.14);
+}

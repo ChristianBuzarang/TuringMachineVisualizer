@@ -1,0 +1,158 @@
+@using TuringMachineVisualizer.Core
+@implements IDisposable
+
+<div class="tm-visualizer">
+    <div class="tm-header">
+        <div>
+            <h3>@Definition.Title</h3>
+            <p class="muted">@Definition.Description</p>
+        </div>
+        <div class="status-badges">
+            <span class="badge state">State: <strong>@_engine.State</strong></span>
+            <span class="badge status @_engine.Status.ToString().ToLowerInvariant()">@_engine.Status</span>
+            <span class="badge steps">Steps: @_engine.StepCount</span>
+        </div>
+    </div>
+
+    <div class="input-bar">
+        <label>Input Tape:</label>
+        <input @bind="_inputText" @bind:event="oninput" placeholder="e.g. #abb#" />
+        <button @onclick="ResetTape">Load / Reset</button>
+    </div>
+
+    <!-- Tape Window -->
+    <div class="tape-strip">
+        @foreach (var cell in _engine.VisibleCells(radius: 9))
+        {
+            var isHead = cell.Index == _engine.Head;
+            <div class="tape-cell @(isHead ? "head" : "")">
+                <div class="head-pointer">@(isHead ? "▼" : "\u00A0")</div>
+                <div class="cell-box">@cell.Symbol</div>
+                <div class="cell-index">@cell.Index</div>
+            </div>
+        }
+    </div>
+
+    <!-- Playback Controls -->
+    <div class="controls">
+        <button @onclick="StepBack" disabled="@(!_engine.CanStepBack || _isPlaying)">◀ Step Back</button>
+        <button @onclick="StepForward" disabled="@(_engine.IsHalted || _isPlaying)">Step ▶</button>
+        <button @onclick="TogglePlay" disabled="@_engine.IsHalted">
+            @(_isPlaying ? "⏸ Pause" : "▶ Play")
+        </button>
+        <button @onclick="RunAll" disabled="@(_engine.IsHalted || _isPlaying)">⏭ Run to Halt</button>
+        <label class="speed">
+            Speed:
+            <select @bind="_delayMs">
+                <option value="800">Slow (0.8s)</option>
+                <option value="350">Normal (0.35s)</option>
+                <option value="100">Fast (0.1s)</option>
+            </select>
+        </label>
+    </div>
+
+    <!-- Transition Table -->
+    <table class="rule-table">
+        <thead>
+            <tr>
+                <th>State</th>
+                <th>Read</th>
+                <th>Next State</th>
+                <th>Write</th>
+                <th>Move</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var rule in Definition.Rules)
+            {
+                var isLast = rule == _engine.LastRule;
+                var isNext = !_engine.IsHalted && rule == _engine.NextRule;
+                <tr class="@(isNext ? "next-rule" : isLast ? "last-rule" : "")">
+                    <td>@rule.State</td>
+                    <td><code>@rule.Read</code></td>
+                    <td>@rule.NextState</td>
+                    <td><code>@rule.Write</code></td>
+                    <td>@rule.Move</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public MachineDefinition Definition { get; set; } = default!;
+
+    private TapeEngine _engine = default!;
+    private MachineDefinition? _loadedDef;
+    private string _inputText = "";
+    private bool _isPlaying;
+    private int _delayMs = 350;
+    private CancellationTokenSource? _playCts;
+
+    protected override void OnParametersSet()
+    {
+        if (!ReferenceEquals(_loadedDef, Definition))
+        {
+            StopPlayback();
+            _loadedDef = Definition;
+            _inputText = Definition.SampleInput;
+            _engine = new TapeEngine(Definition, _inputText);
+        }
+    }
+
+    private void ResetTape()
+    {
+        StopPlayback();
+        _engine.Load(_inputText);
+    }
+
+    private void StepForward() => _engine.StepForward();
+
+    private void StepBack() => _engine.StepBack();
+
+    private void RunAll()
+    {
+        StopPlayback();
+        _engine.RunToHalt();
+    }
+
+    private async Task TogglePlay()
+    {
+        if (_isPlaying)
+        {
+            StopPlayback();
+            return;
+        }
+
+        _isPlaying = true;
+        _playCts = new CancellationTokenSource();
+        var token = _playCts.Token;
+
+        try
+        {
+            while (!token.IsCancellationRequested && !_engine.IsHalted)
+            {
+                _engine.StepForward();
+                StateHasChanged();
+                if (_engine.IsHalted) break;
+                await Task.Delay(_delayMs, token);
+            }
+        }
+        catch (TaskCanceledException) { }
+        finally
+        {
+            _isPlaying = false;
+            StateHasChanged();
+        }
+    }
+
+    private void StopPlayback()
+    {
+        _playCts?.Cancel();
+        _playCts?.Dispose();
+        _playCts = null;
+        _isPlaying = false;
+    }
+
+    public void Dispose() => StopPlayback();
+}
