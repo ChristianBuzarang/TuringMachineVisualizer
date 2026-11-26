@@ -1,0 +1,44 @@
+@page "/progress"
+
+<PageTitle>Quest log</PageTitle>
+
+<div class="stage">
+    <div class="page-head">
+        <h1>Quest log</h1>
+        <p class="muted">Preview layout with sample data. It will read from your saved runs once tracking is connected.</p>
+    </div>
+
+    <div class="panel level">
+        <span class="lv">3</span>
+        <div>
+            <h3>Tape runner</h3>
+            <span class="muted mono">640 / 1000 XP</span>
+        </div>
+        <div class="bar" role="progressbar" aria-valuenow="64" aria-valuemin="0" aria-valuemax="100"><i style="width:64%"></i></div>
+        <span class="badge warn">3-day streak</span>
+    </div>
+
+    <div class="panel">
+        <h3>Missions</h3>
+        @foreach (var m in _missions)
+        {
+            <div class="mission">
+                <div><b>@m.Title</b><div class="muted">@m.Detail</div></div>
+                <span class="badge @(m.Done ? "ok" : "live")">@(m.Done ? "Cleared" : $"+{m.Xp} XP")</span>
+                <div class="bar"><i style="width:@(m.Percent)%"></i></div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private record Mission(string Title, string Detail, int Xp, int Percent, bool Done);
+
+    private readonly Mission[] _missions =
+    {
+        new("First run", "Run the a/b inverter to acceptance.", 100, 100, true),
+        new("Build your own", "Save a custom machine with at least 4 rules.", 250, 50, false),
+        new("Regex to NFA", "Convert 3 regular expressions into automata.", 300, 33, false),
+        new("Grammar check", "Analyze a context-free grammar.", 200, 0, false)
+    };
+}
