@@ -6,12 +6,17 @@
 @inject NavigationManager Nav
 @implements IDisposable
 
-<PageTitle>1-Tape Turing Machine Visualizer</PageTitle>
+<PageTitle>Visualizer arena</PageTitle>
 
-<div class="workspace">
-    <div class="toolbar">
+<div class="stage">
+    <div class="page-head">
+        <h1>Visualizer arena</h1>
+        <p class="muted">Pick a machine, load an input, then step through it one transition at a time.</p>
+    </div>
+
+    <div class="toolbar panel">
         <div class="preset-group">
-            <label for="presetSelect">Preset:</label>
+            <label for="presetSelect">Machine</label>
             <select id="presetSelect" @onchange="OnPresetChanged">
                 <option value="abb">a/b Inverter (#abb# → #baa#)</option>
                 @foreach (var m in _savedMachines)
@@ -26,20 +31,20 @@
             {
                 <span class="user-tag">@Supabase.CurrentUser?.Email</span>
                 <button type="button" @onclick="SaveCurrentMachine" disabled="@_isSaving">
-                    @(_isSaving ? "Saving..." : "Save Machine")
+                    @(_isSaving ? "Saving..." : "Save machine")
                 </button>
-                <button type="button" class="secondary" @onclick="SignOut">Sign Out</button>
+                <button type="button" class="ghost" @onclick="SignOut">Sign out</button>
             }
             else
             {
-                <button type="button" @onclick='() => Nav.NavigateTo("/auth")'>Sign In / Sign Up</button>
+                <button type="button" class="primary" @onclick='() => Nav.NavigateTo("/auth")'>Sign in to save</button>
             }
         </div>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(_statusBanner))
     {
-        <div class="banner">@_statusBanner</div>
+        <div class="banner" role="status">@_statusBanner</div>
     }
 
     <TapeView Definition="_activeMachine" />

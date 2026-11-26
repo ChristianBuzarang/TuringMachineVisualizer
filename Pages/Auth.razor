@@ -3,42 +3,49 @@
 @inject SupabaseService Supabase
 @inject NavigationManager Nav
 
-<PageTitle>Account — Turing Machine Visualizer</PageTitle>
+<PageTitle>Account</PageTitle>
 
-<div class="auth-card">
-    <h2>@(_isSignUp ? "Create Account" : "Sign In")</h2>
-    <p class="muted">Save custom 1-tape Turing Machines and solver runs to Supabase.</p>
+<div class="auth">
+    <div class="panel">
+        <h2>Save your progress</h2>
+        <p class="muted">An account keeps your custom machines, solver runs and quest progress in Supabase, so you can pick up on any device.</p>
+        <p class="mono ok">Your data is private to your account.</p>
+    </div>
 
-    @if (!string.IsNullOrWhiteSpace(_error))
-    {
-        <div class="error-box">@_error</div>
-    }
+    <div class="panel">
+        <h2>@(_isSignUp ? "Create account" : "Sign in")</h2>
 
-    @if (_isSignUp)
-    {
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="error-box" role="alert">@_error</div>
+        }
+
+        @if (_isSignUp)
+        {
+            <div class="field">
+                <label for="dn">Display name</label>
+                <input id="dn" @bind="_displayName" placeholder="Your name" />
+            </div>
+        }
+
         <div class="field">
-            <label>Display Name</label>
-            <input @bind="_displayName" placeholder="Your name" />
+            <label for="em">Email</label>
+            <input id="em" type="email" @bind="_email" placeholder="you@example.com" />
         </div>
-    }
 
-    <div class="field">
-        <label>Email</label>
-        <input type="email" @bind="_email" placeholder="you@example.com" />
-    </div>
+        <div class="field">
+            <label for="pw">Password</label>
+            <input id="pw" type="password" @bind="_password" placeholder="••••••••" />
+        </div>
 
-    <div class="field">
-        <label>Password</label>
-        <input type="password" @bind="_password" placeholder="••••••••" />
-    </div>
-
-    <div class="actions">
-        <button type="button" @onclick="SubmitAsync" disabled="@_busy">
-            @(_busy ? "Working..." : (_isSignUp ? "Sign Up" : "Sign In"))
-        </button>
-        <button type="button" class="secondary" @onclick="ToggleMode" disabled="@_busy">
-            @(_isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up")
-        </button>
+        <div class="actions">
+            <button type="button" class="primary" @onclick="SubmitAsync" disabled="@_busy">
+                @(_busy ? "Working..." : (_isSignUp ? "Create account" : "Sign in"))
+            </button>
+            <button type="button" class="ghost" @onclick="ToggleMode" disabled="@_busy">
+                @(_isSignUp ? "Have an account? Sign in" : "New here? Create an account")
+            </button>
+        </div>
     </div>
 </div>
 
