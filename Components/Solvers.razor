@@ -1,0 +1,73 @@
+@page "/solvers"
+
+<PageTitle>Problem solvers</PageTitle>
+
+<div class="stage">
+    <div class="page-head">
+        <h1>Problem solvers</h1>
+        <p class="muted">Pick a module, enter your problem, and inspect each stage of the solution.</p>
+    </div>
+
+    <div class="tabs" role="tablist">
+        @foreach (var t in _tabs)
+        {
+            <button type="button" role="tab" aria-selected="@(_tab == t.Key)" class="tab @(_tab == t.Key ? "on" : "")" @onclick="() => Select(t.Key)">@t.Title</button>
+        }
+    </div>
+
+    <div class="solver">
+        <div class="panel">
+            <h3>@Current.Title</h3>
+            <p class="muted">@Current.Help</p>
+            @if (_tab == "cfg")
+            {
+                <textarea rows="5" class="mono" @bind="_input" placeholder="S -> aSb | ε" aria-label="Grammar"></textarea>
+            }
+            else
+            {
+                <input class="mono" @bind="_input" placeholder="@Current.Placeholder" aria-label="Problem input" />
+            }
+            <div class="controls" style="margin-top:.8rem">
+                <button type="button" class="primary" @onclick="Run">@Current.Action</button>
+                <button type="button" class="ghost" @onclick="Clear">Clear</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Result</h3>
+            @if (string.IsNullOrEmpty(_result))
+            {
+                <div class="empty">Nothing to show yet. Enter a problem and press @Current.Action.</div>
+            }
+            else
+            {
+                <div class="out">@_result</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private record Tab(string Key, string Title, string Help, string Placeholder, string Action);
+
+    private readonly Tab[] _tabs =
+    {
+        new("regex", "Regex to automaton", "Turn a regular expression into an NFA, then a DFA.", "(a|b)*abb", "Build automaton"),
+        new("cfg", "Grammar tools", "Check productions, find nullable and reachable symbols, and derive strings.", "", "Analyze grammar"),
+        new("convert", "Conversions", "Convert between representations, such as NFA to DFA.", "Paste an NFA transition table", "Convert")
+    };
+
+    private string _tab = "regex";
+    private string _input = "";
+    private string _result = "";
+
+    private Tab Current => _tabs.First(t => t.Key == _tab);
+
+    private void Select(string key) { _tab = key; _input = ""; _result = ""; }
+    private void Clear() { _input = ""; _result = ""; }
+
+    // Hook point: call your solver services here, then optionally save to solver_runs.
+    private void Run() => _result = string.IsNullOrWhiteSpace(_input)
+        ? "Enter a problem first."
+        : "Solver engine not connected yet.";
+}
