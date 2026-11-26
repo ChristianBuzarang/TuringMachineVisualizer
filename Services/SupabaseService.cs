@@ -98,7 +98,7 @@ public sealed class SupabaseService
     public async Task<List<SavedMachineRecord>> GetMyMachinesAsync()
     {
         if (!IsAuthenticated)
-            return new();
+            return new List<SavedMachineRecord>();
 
         var response = await _client
             .From<SavedMachineRecord>()
@@ -106,7 +106,7 @@ public sealed class SupabaseService
             .Order("created_at", Supabase.Postgrest.Constants.Ordering.Descending)
             .Get();
 
-        return response.Models;
+        return response.Models ?? new List<SavedMachineRecord>();
     }
 
     public async Task<SavedMachineRecord?> SaveMachineAsync(MachineDefinition definition)
