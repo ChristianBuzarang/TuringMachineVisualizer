@@ -1,0 +1,69 @@
+@page "/rules"
+
+<PageTitle>Rule editor</PageTitle>
+
+<div class="stage">
+    <div class="page-head">
+        <h1>Rule editor &amp; presets</h1>
+        <p class="muted">Build a machine rule by rule, or start from a preset.</p>
+    </div>
+
+    <div class="grid">
+        <div class="panel card">
+            <span class="badge ok">Ready</span>
+            <h3>a/b Inverter</h3>
+            <p class="muted">Swaps every a and b between # delimiters.</p>
+            <button type="button" @onclick="LoadInverter">Load rules</button>
+        </div>
+        <div class="panel card">
+            <span class="badge warn">Planned</span>
+            <h3>Binary increment</h3>
+            <p class="muted">Adds 1 to a binary number on the tape.</p>
+        </div>
+        <div class="panel card">
+            <span class="badge warn">Planned</span>
+            <h3>Palindrome checker</h3>
+            <p class="muted">Accepts strings that read the same both ways.</p>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>Transition rules</h3>
+        <div class="rule-row muted"><span>State</span><span>Read</span><span>Write</span><span>Move (L/R/S)</span><span>Next state</span><span></span></div>
+        @foreach (var r in _rows)
+        {
+            <div class="rule-row mono">
+                <input @bind="r.State" aria-label="State" />
+                <input @bind="r.Read" maxlength="1" aria-label="Read symbol" />
+                <input @bind="r.Write" maxlength="1" aria-label="Write symbol" />
+                <input @bind="r.Move" maxlength="1" aria-label="Move" />
+                <input @bind="r.Next" aria-label="Next state" />
+                <button type="button" class="ghost" @onclick="() => _rows.Remove(r)" aria-label="Remove rule">✕</button>
+            </div>
+        }
+        @if (_rows.Count == 0)
+        {
+            <div class="empty">No rules yet. Add one, or load a preset.</div>
+        }
+        <div class="controls">
+            <button type="button" class="ghost" @onclick="AddRow">Add rule</button>
+            <button type="button" class="primary" disabled="@(_rows.Count == 0)">Save machine</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private class Row { public string State = "q0"; public string Read = "_"; public string Write = "_"; public string Move = "R"; public string Next = "q0"; }
+    private readonly List<Row> _rows = new();
+
+    private void AddRow() => _rows.Add(new Row());
+
+    private void LoadInverter()
+    {
+        _rows.Clear();
+        _rows.Add(new Row { State = "q0", Read = "#", Write = "#", Move = "R", Next = "q1" });
+        _rows.Add(new Row { State = "q1", Read = "a", Write = "b", Move = "R", Next = "q1" });
+        _rows.Add(new Row { State = "q1", Read = "b", Write = "a", Move = "R", Next = "q1" });
+        _rows.Add(new Row { State = "q1", Read = "#", Write = "#", Move = "S", Next = "qAccept" });
+    }
+}
