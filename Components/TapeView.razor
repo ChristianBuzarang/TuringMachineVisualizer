@@ -1,158 +1,144 @@
 @using TuringMachineVisualizer.Core
 @implements IDisposable
 
-<div class="tm-visualizer">
-    <div class="tm-header">
-        <div>
-            <h3>@Definition.Title</h3>
-            <p class="muted">@Definition.Description</p>
-        </div>
-        <div class="status-badges">
-            <span class="badge state">State: <strong>@_engine.State</strong></span>
-            <span class="badge status @_engine.Status.ToString().ToLowerInvariant()">@_engine.Status</span>
-            <span class="badge steps">Steps: @_engine.StepCount</span>
-        </div>
+<section class="stage" aria-label="Turing machine arena">
+    <div class="hud panel">
+        <div class="stat"><span>State</span><b class="@StatusClass">@_tm.State</b></div>
+        <div class="stat"><span>Steps</span><b>@_tm.StepCount</b></div>
+        <div class="stat"><span>Head position</span><b>@_tm.Head</b></div>
+        <div class="stat"><span>Status</span><b class="@StatusClass">@StatusText</b></div>
     </div>
 
-    <div class="input-bar">
-        <label>Input Tape:</label>
-        <input @bind="_inputText" @bind:event="oninput" placeholder="e.g. #abb#" />
-        <button @onclick="ResetTape">Load / Reset</button>
-    </div>
-
-    <!-- Tape Window -->
-    <div class="tape-strip">
-        @foreach (var cell in _engine.VisibleCells(radius: 9))
-        {
-            var isHead = cell.Index == _engine.Head;
-            <div class="tape-cell @(isHead ? "head" : "")">
-                <div class="head-pointer">@(isHead ? "▼" : "\u00A0")</div>
-                <div class="cell-box">@cell.Symbol</div>
-                <div class="cell-index">@cell.Index</div>
-            </div>
-        }
-    </div>
-
-    <!-- Playback Controls -->
-    <div class="controls">
-        <button @onclick="StepBack" disabled="@(!_engine.CanStepBack || _isPlaying)">◀ Step Back</button>
-        <button @onclick="StepForward" disabled="@(_engine.IsHalted || _isPlaying)">Step ▶</button>
-        <button @onclick="TogglePlay" disabled="@_engine.IsHalted">
-            @(_isPlaying ? "⏸ Pause" : "▶ Play")
-        </button>
-        <button @onclick="RunAll" disabled="@(_engine.IsHalted || _isPlaying)">⏭ Run to Halt</button>
-        <label class="speed">
-            Speed:
-            <select @bind="_delayMs">
-                <option value="800">Slow (0.8s)</option>
-                <option value="350">Normal (0.35s)</option>
-                <option value="100">Fast (0.1s)</option>
-            </select>
-        </label>
-    </div>
-
-    <!-- Transition Table -->
-    <table class="rule-table">
-        <thead>
-            <tr>
-                <th>State</th>
-                <th>Read</th>
-                <th>Next State</th>
-                <th>Write</th>
-                <th>Move</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var rule in Definition.Rules)
+    <div class="panel">
+        <div class="tape" role="list" aria-label="Tape">
+            @foreach (var (i, s) in _tm.VisibleCells(7))
             {
-                var isLast = rule == _engine.LastRule;
-                var isNext = !_engine.IsHalted && rule == _engine.NextRule;
-                <tr class="@(isNext ? "next-rule" : isLast ? "last-rule" : "")">
-                    <td>@rule.State</td>
-                    <td><code>@rule.Read</code></td>
-                    <td>@rule.NextState</td>
-                    <td><code>@rule.Write</code></td>
-                    <td>@rule.Move</td>
-                </tr>
+                <div role="listitem" class="cell @(i == _tm.Head ? "on" : "")">
+                    <span class="sym">@(s == Definition.Blank ? "␣" : s.ToString())</span>
+                    <span class="idx">@i</span>
+                </div>
             }
-        </tbody>
-    </table>
-</div>
+        </div>
+    </div>
+
+    <div class="controls panel">
+        <input class="input-field" aria-label="Tape input" @bind="_input" @bind:event="oninput" placeholder="Tape input" />
+        <button type="button" class="ghost" @onclick="Reset">Load input</button>
+        <button type="button" class="ghost" @onclick="Back" disabled="@(!_tm.CanStepBack)">Step back</button>
+        <button type="button" @onclick="StepOnce" disabled="@_tm.IsHalted">Step</button>
+        <button type="button" class="primary" @onclick="TogglePlay" disabled="@_tm.IsHalted">@(_cts is null ? "Run" : "Pause")</button>
+        <input class="speed" type="range" min="80" max="1000" step="40" @bind="_delay" aria-label="Delay between steps" />
+    </div>
+
+    <div class="split">
+        <div class="panel">
+            <h3>Transition rules</h3>
+            <table class="rules">
+                <thead><tr><th>State</th><th>Read</th><th>Write</th><th>Move</th><th>Next</th></tr></thead>
+                <tbody>
+                    @foreach (var r in Definition.Rules)
+                    {
+                        <tr class="@(r == _tm.LastRule ? "fired" : "")">
+                            <td>@r.State</td><td>@r.Read</td><td>@r.Write</td><td>@Arrow(r.Move)</td><td>@r.NextState</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="panel">
+            <h3>Step log</h3>
+            @if (_log.Count == 0)
+            {
+                <div class="empty">No steps yet. Press Step or Run.</div>
+            }
+            else
+            {
+                <ol class="log">
+                    @foreach (var line in _log) { <li>@line</li> }
+                </ol>
+            }
+        </div>
+    </div>
+</section>
 
 @code {
-    [Parameter, EditorRequired] public MachineDefinition Definition { get; set; } = default!;
+    [Parameter] public MachineDefinition Definition { get; set; } = default!;
 
-    private TapeEngine _engine = default!;
-    private MachineDefinition? _loadedDef;
-    private string _inputText = "";
-    private bool _isPlaying;
-    private int _delayMs = 350;
-    private CancellationTokenSource? _playCts;
+    private MachineDefinition? _def;
+    private TapeEngine _tm = default!;
+    private readonly List<string> _log = new();
+    private string _input = "";
+    private int _delay = 400;
+    private CancellationTokenSource? _cts;
 
     protected override void OnParametersSet()
     {
-        if (!ReferenceEquals(_loadedDef, Definition))
-        {
-            StopPlayback();
-            _loadedDef = Definition;
-            _inputText = Definition.SampleInput;
-            _engine = new TapeEngine(Definition, _inputText);
-        }
+        if (ReferenceEquals(_def, Definition)) return;
+        _def = Definition;
+        _input = Definition.SampleInput;
+        Reset();
     }
 
-    private void ResetTape()
+    private void Reset()
     {
-        StopPlayback();
-        _engine.Load(_inputText);
+        Stop();
+        _tm = new TapeEngine(Definition, _input);
+        _log.Clear();
     }
 
-    private void StepForward() => _engine.StepForward();
-
-    private void StepBack() => _engine.StepBack();
-
-    private void RunAll()
+    private bool Forward()
     {
-        StopPlayback();
-        _engine.RunToHalt();
+        if (!_tm.StepForward()) return false;
+        var r = _tm.LastRule!;
+        _log.Add($"{_log.Count + 1}. in {r.State} read {r.Read}, write {r.Write}, move {Arrow(r.Move)}, go to {r.NextState}");
+        return true;
+    }
+
+    private void StepOnce() { Stop(); Forward(); }
+
+    private void Back()
+    {
+        Stop();
+        if (_tm.StepBack() && _log.Count > 0) _log.RemoveAt(_log.Count - 1);
     }
 
     private async Task TogglePlay()
     {
-        if (_isPlaying)
-        {
-            StopPlayback();
-            return;
-        }
-
-        _isPlaying = true;
-        _playCts = new CancellationTokenSource();
-        var token = _playCts.Token;
-
+        if (_cts is not null) { Stop(); return; }
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
         try
         {
-            while (!token.IsCancellationRequested && !_engine.IsHalted)
+            while (!token.IsCancellationRequested && Forward())
             {
-                _engine.StepForward();
                 StateHasChanged();
-                if (_engine.IsHalted) break;
-                await Task.Delay(_delayMs, token);
+                await Task.Delay(_delay, token);
             }
         }
         catch (TaskCanceledException) { }
-        finally
-        {
-            _isPlaying = false;
-            StateHasChanged();
-        }
+        finally { _cts = null; }
     }
 
-    private void StopPlayback()
+    private void Stop() { _cts?.Cancel(); _cts = null; }
+
+    private static string Arrow(Move m) => m switch { Move.Left => "L", Move.Right => "R", _ => "S" };
+
+    private string StatusText => _tm.Status switch
     {
-        _playCts?.Cancel();
-        _playCts?.Dispose();
-        _playCts = null;
-        _isPlaying = false;
-    }
+        RunStatus.Accepted => "Accepted",
+        RunStatus.Rejected => "Rejected",
+        RunStatus.StepLimitReached => "Step limit",
+        RunStatus.Running => "Running",
+        _ => "Ready"
+    };
 
-    public void Dispose() => StopPlayback();
+    private string StatusClass => _tm.Status switch
+    {
+        RunStatus.Accepted => "ok",
+        RunStatus.Rejected => "bad",
+        RunStatus.StepLimitReached => "warn",
+        _ => "live"
+    };
+
+    public void Dispose() => Stop();
 }
