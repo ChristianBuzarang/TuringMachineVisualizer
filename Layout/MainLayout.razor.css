@@ -1,77 +1,12 @@
-.page {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-}
-
-main {
-    flex: 1;
-}
-
-.sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
-}
-
-.top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
-    height: 3.5rem;
-    display: flex;
-    align-items: center;
-}
-
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
-    }
-
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
-    }
-
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-@media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
-    }
-
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
-}
-
-@media (min-width: 641px) {
-    .page {
-        flex-direction: row;
-    }
-
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
-
-    .top-row {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-    .top-row.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
-    }
-
-    .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
-    }
-}
+.app-shell{display:flex;min-height:100vh}
+.rail{width:236px;flex-shrink:0;background:rgba(10,14,40,.9);border-right:1px solid #2B3475}
+.main-column{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:56px;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2B3475;background:rgba(10,14,40,.7);backdrop-filter:blur(8px)}
+.brand-title{font-weight:700;font-size:1.05rem;letter-spacing:.02em}
+.player{display:flex;align-items:center;gap:.7rem}
+.lv{font:700 .9rem 'JetBrains Mono',monospace;color:#FFC247;border:1px solid #FFC247;padding:.1rem .5rem;border-radius:3px 8px 3px 8px}
+.xp{width:120px;height:6px;background:#0A0E28;border:1px solid #2B3475;border-radius:99px;overflow:hidden}
+.xp i{display:block;height:100%;background:linear-gradient(90deg,#FFC247,#FF4D8D)}
+.xp-text{font:.75rem 'JetBrains Mono',monospace;color:#8B94C9}
+.content-area{padding:1.5rem;max-width:1200px;width:100%;margin:0 auto}
+@media (max-width:768px){.app-shell{flex-direction:column}.rail{width:100%;border-right:none;border-bottom:1px solid #2B3475}.xp,.xp-text{display:none}}

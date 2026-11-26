@@ -1,50 +1,23 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">TuringMachineVisualizer</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
+﻿<div class="top-row">
+    <a class="navbar-brand" href="">
+        <span class="logo-mark">TM</span>
+        <span>Turing Studio</span>
+    </a>
+    <button type="button" title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">☰</button>
 </div>
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+    <nav class="nav-links">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All"><span class="ico">▶</span>Visualizer</NavLink>
+        <NavLink class="nav-link" href="rules"><span class="ico">✎</span>Rule editor &amp; presets</NavLink>
+        <NavLink class="nav-link" href="solvers"><span class="ico">⌬</span>Problem solvers</NavLink>
+        <NavLink class="nav-link" href="progress"><span class="ico">★</span>Quest log</NavLink>
+        <NavLink class="nav-link" href="auth"><span class="ico">◉</span>Account</NavLink>
     </nav>
-</div>
-
-<div class="nav-item px-3">
-    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-        <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Visualizer
-    </NavLink>
-</div>
-<div class="nav-item px-3">
-    <NavLink class="nav-link" href="auth">
-        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> Account
-    </NavLink>
 </div>
 
 @code {
     private bool collapseNavMenu = true;
-
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
 }

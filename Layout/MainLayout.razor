@@ -1,16 +1,22 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
+
+<div class="app-shell">
+    <aside class="rail">
         <NavMenu />
-    </div>
+    </aside>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    <div class="main-column">
+        <header class="topbar">
+            <span class="brand-title">Turing Arena</span>
+            <div class="player" title="Progress preview">
+                <span class="lv">Lv 3</span>
+                <div class="xp"><i style="width:64%"></i></div>
+                <span class="xp-text">640 / 1000 XP</span>
+            </div>
+        </header>
 
-        <article class="content px-4">
+        <main class="content-area">
             @Body
-        </article>
-    </main>
+        </main>
+    </div>
 </div>
